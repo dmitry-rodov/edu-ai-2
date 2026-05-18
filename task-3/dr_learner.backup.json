@@ -1,0 +1,882 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d46db426-2849-45b3-a987-055004843d2a",
+      "name": "Telegram Trigger",
+      "webhookId": "ce4dd588-bf44-404b-9d24-2e6252b96b0d",
+      "credentials": {
+        "telegramApi": {
+          "id": "pkKwmTW4Nl2qWnD6",
+          "name": "dr_learner"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "📚 You haven't saved any learning materials yet! Send me a URL to get started.\nExample: https://en.wikipedia.org/wiki/Machine_learning",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        288
+      ],
+      "id": "d14001f8-0f93-4d87-bbca-c24addc84834",
+      "name": "Send a text message1",
+      "webhookId": "e4eebdb5-8071-44c8-85d0-a55f472f7a2a",
+      "credentials": {
+        "telegramApi": {
+          "id": "pkKwmTW4Nl2qWnD6",
+          "name": "dr_learner"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/start",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b891d280-6375-4337-b3b1-e872115fb804"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "fe928641-1fb0-4a50-96da-d3d7fe5f9875",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/learn",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d8e01a09-bb93-4a72-94c6-14a17b4c46bb",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/quiz",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "61ad6c3a-7a94-4d52-b272-22ef29b8c996",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "e217fdcf-1548-4816-82ac-6f92f84a791a",
+      "name": "CommandSwitch"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract URL from /learn command\nconst messageText = $input.first().json.message.text;\nconst chatId = $input.first().json.message.chat.id;\nconst userId = $input.first().json.message.from.id;\n\n// Split the message: \"/learn https://example.com\"\nconst parts = messageText.trim().split(/\\s+/);\n\n// Check if URL was provided\nif (parts.length < 2) {\n  return {\n    json: {\n      error: true,\n      chatId: chatId,\n      errorMessage: \"❌ Please provide a URL.\\n\\nUsage: /learn [url]\\nExample: /learn https://example.com/article\"\n    }\n  };\n}\n\nconst url = parts[1];\n\n// Basic URL validation\nconst urlPattern = /^https?:\\/\\/.+/i;\nif (!urlPattern.test(url)) {\n  return {\n    json: {\n      error: true,\n      chatId: chatId,\n      errorMessage: \"❌ Invalid URL format.\\n\\nPlease provide a valid URL starting with http:// or https://\"\n    }\n  };\n}\n\n// Success - return extracted data\nreturn {\n  json: {\n    error: false,\n    chatId: chatId,\n    userId: userId,\n    url: url,\n    originalMessage: messageText\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        0
+      ],
+      "id": "1cf9f54e-4350-40a3-b2ba-4a7ffa940fb0",
+      "name": "Learn_ParseUrl"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.errorMessage }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        -96
+      ],
+      "id": "ac443e49-9775-41d4-975d-7baf46e374fb",
+      "name": "Learn_ParseUrl_Error",
+      "webhookId": "e937bc8f-29a7-4456-b2c0-c1a273f9474d",
+      "credentials": {
+        "telegramApi": {
+          "id": "pkKwmTW4Nl2qWnD6",
+          "name": "dr_learner"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.error }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "0b2233c2-4974-4a30-a21f-91c4428ad1be"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "4a327a05-48a8-4961-b6d2-58131d29cd57",
+                    "leftValue": "={{ $json.error }}",
+                    "rightValue": "false",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        0
+      ],
+      "id": "c0625c90-5088-42bc-8446-0571015eb695",
+      "name": "Learn_ParseUrl_ErrorCheck"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "=📚 Processing your learning material...\nURL: {{ $json.url }}\n⏳ Fetching content and generating summary...",
+        "additionalFields": {
+          "disable_web_page_preview": true
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        96
+      ],
+      "id": "756e2a82-fc5c-4d86-8034-1015aaff3124",
+      "name": "Learn_GetMaterials_Status",
+      "webhookId": "44db762f-9c2a-41a7-b41b-6d37ae178b6f",
+      "credentials": {
+        "telegramApi": {
+          "id": "pkKwmTW4Nl2qWnD6",
+          "name": "dr_learner"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Learn_ParseUrl_ErrorCheck').item.json.url }}",
+        "options": {
+          "allowUnauthorizedCerts": false,
+          "redirect": {
+            "redirect": {
+              "maxRedirects": 3
+            }
+          },
+          "timeout": 45000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1056,
+        96
+      ],
+      "id": "170f270c-db64-4f4b-af35-5a3509a57e3e",
+      "name": "Learn_GetMaterials",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Simple HTML to text extraction\nconst html = $input.first().json.data;\nconst url = $('Learn_ParseUrl').first().json.url;\nconst chatId = $('Learn_ParseUrl').first().json.chatId;\nconst userId = $('Learn_ParseUrl').first().json.userId;\n\n// Remove script and style tags\nlet text = html.replace(/<script\\b[^<]*(?:(?!<\\/script>)<[^<]*)*<\\/script>/gi, '');\ntext = text.replace(/<style\\b[^<]*(?:(?!<\\/style>)<[^<]*)*<\\/style>/gi, '');\n\n// Remove HTML tags\ntext = text.replace(/<[^>]+>/g, ' ');\n\n// Decode HTML entities\ntext = text.replace(/&nbsp;/g, ' ');\ntext = text.replace(/&amp;/g, '&');\ntext = text.replace(/&lt;/g, '<');\ntext = text.replace(/&gt;/g, '>');\ntext = text.replace(/&quot;/g, '\"');\n\n// Clean up whitespace\ntext = text.replace(/\\s+/g, ' ').trim();\n\n// Limit to first 8000 characters (for AI processing)\nconst content = text.substring(0, 8000);\n\n// Try to extract title from first heading or use URL\nconst titleMatch = html.match(/<title[^>]*>([^<]+)<\\/title>/i);\nconst title = titleMatch ? titleMatch[1].trim() : url;\n\nreturn {\n  json: {\n    url: url,\n    title: title,\n    content: content,\n    chatId: chatId,\n    userId: userId,\n    contentLength: content.length\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        0
+      ],
+      "id": "d134d168-3fff-43a5-95b3-c8b3734e1f55",
+      "name": "Learn_GetMaterials_Parse"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert Teacher AI. Your role is to analyze learning materials and create clear, structured summaries that help students understand key concepts."
+            },
+            {
+              "content": "=nalyze the following learning material and create a structured summary.\n\n**Title:** {{ $json.title }}\n\n**Content:**\n{{ $json.content }}\n\n**Instructions:**\n1. Extract 5-7 key points (most important takeaways)\n2. Identify 3-5 main concepts (core ideas to understand)\n3. Assess difficulty level: beginner, intermediate, or advanced\n4. Provide a brief overview (2-3 sentences)\n\n**Output format (JSON):**\n{\n  \"title\": \"extracted or improved title\",\n  \"overview\": \"brief 2-3 sentence summary\",\n  \"keyPoints\": [\n    \"First key point\",\n    \"Second key point\",\n    ...\n  ],\n  \"mainConcepts\": [\n    \"First concept\",\n    \"Second concept\",\n    ...\n  ],\n  \"difficulty\": \"beginner|intermediate|advanced\",\n  \"estimatedReadingTime\": \"X minutes\"\n}\n\nReturn ONLY valid JSON, no additional text."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 2000,
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1472,
+        0
+      ],
+      "id": "966cc5b1-8643-44fa-966f-0e10467a4ec3",
+      "name": "Learn_GetMaterials_Analyze",
+      "credentials": {
+        "openAiApi": {
+          "id": "yT6lzOEQYP7SqBkQ",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Learn_GetMaterials_Status').item.json.result.chat.id }}",
+        "text": "Text: \n❌ Failed to fetch content from URL.\n\nPossible reasons:\n• URL is not accessible\n• Website blocks automated requests\n• Network timeout\n\nPlease try a different URL.",
+        "replyMarkup": "=none",
+        "forceReply": {},
+        "replyKeyboardOptions": {},
+        "replyKeyboardRemove": {},
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1264,
+        192
+      ],
+      "id": "f8fea7e2-dd73-4c05-b957-8cb2a03c7a8b",
+      "name": "Learn_GetMaterials_ReportError",
+      "webhookId": "50dfe5d8-c77b-4a6d-9387-ecfc3e44da6f",
+      "credentials": {
+        "telegramApi": {
+          "id": "pkKwmTW4Nl2qWnD6",
+          "name": "dr_learner"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Teacher AI response\nconst aiOutput = $input.first().json.output;\nconst previousData = $('Learn_GetMaterials_Parse').first().json;\n\n// Extract the text from OpenAI response structure\nlet aiText = '';\nif (Array.isArray(aiOutput) && aiOutput[0]?.content?.[0]?.text) {\n  aiText = aiOutput[0].content[0].text;\n} else {\n  aiText = $input.first().json.message?.content || $input.first().json.text || '';\n}\n\nlet summary;\ntry {\n  // Remove markdown code blocks if present\n  let jsonText = aiText.trim();\n  \n  // Check if wrapped in ```json ... ```\n  if (jsonText.startsWith('```json')) {\n    jsonText = jsonText.replace(/^```json\\s*\\n/, '').replace(/\\n```$/, '');\n  } else if (jsonText.startsWith('```')) {\n    jsonText = jsonText.replace(/^```\\s*\\n/, '').replace(/\\n```$/, '');\n  }\n  \n  // Parse the cleaned JSON\n  summary = JSON.parse(jsonText.trim());\n  \n} catch (error) {\n  // Fallback if parsing fails\n  console.error('JSON parse error:', error);\n  summary = {\n    title: previousData.title,\n    overview: \"Summary generation failed. Please try again.\",\n    keyPoints: [],\n    mainConcepts: [],\n    difficulty: \"unknown\",\n    estimatedReadingTime: \"N/A\"\n  };\n}\n\n// Generate unique ID for this material\nconst timestamp = Date.now();\nconst materialId = `LM-${timestamp}`;\n\n// Prepare complete learning material object\nreturn {\n  json: {\n    // Metadata\n    id: materialId,\n    userId: previousData.userId,\n    chatId: previousData.chatId,\n    url: previousData.url,\n    addedDate: new Date().toISOString(),\n    \n    // Content\n    title: summary.title || previousData.title,\n    content: previousData.content,\n    \n    // AI-generated summary\n    summary: {\n      overview: summary.overview,\n      keyPoints: summary.keyPoints || [],\n      mainConcepts: summary.mainConcepts || [],\n      difficulty: summary.difficulty || \"intermediate\",\n      estimatedReadingTime: summary.estimatedReadingTime || \"5 minutes\"\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        0
+      ],
+      "id": "db2d7081-0356-4bf5-abe0-82fb8157b2c0",
+      "name": "Learn_GetMaterials_ParseAnalyzed"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1qUzievXrhVMCNIyzEBCMHNADDdUlIKW3oCnIRLvmu14",
+          "mode": "list",
+          "cachedResultName": "ai-learning-materials",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qUzievXrhVMCNIyzEBCMHNADDdUlIKW3oCnIRLvmu14/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Materials",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qUzievXrhVMCNIyzEBCMHNADDdUlIKW3oCnIRLvmu14/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "url": "={{ $json.url }}",
+            "id": "={{ $json.id }}",
+            "userId": "={{ $json.userId }}",
+            "chatId": "={{ $json.chatId }}",
+            "title": "={{ $json.title}}",
+            "content": "={{ $json.content }}",
+            "summaryJSON": "={{ JSON.stringify($json.summary) }}",
+            "difficulty": "={{ $json.summary.difficulty }}",
+            "addedDate": "={{ $json.addedDate }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "userId",
+              "displayName": "userId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "chatId",
+              "displayName": "chatId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summaryJSON",
+              "displayName": "summaryJSON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "difficulty",
+              "displayName": "difficulty",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "addedDate",
+              "displayName": "addedDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2032,
+        0
+      ],
+      "id": "0a49f1da-0ad1-4514-88b2-ac7f419dc4df",
+      "name": "Learn_SaveMaterials",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7aFUTLcHOD2ytmCb",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format summary for Telegram display\nconst data = $input.first().json;\nconst summary = typeof data.summaryJSON === 'string' \n  ? JSON.parse(data.summaryJSON) \n  : data.summary;\n\n// Build formatted message with Telegram Markdown\nlet message = `📚 *Learning Material Saved*\\n\\n`;\nmessage += `*${data.title}*\\n\\n`;\n\n// Overview\nmessage += `📝 *Overview:*\\n${summary.overview}\\n\\n`;\n\n// Difficulty badge\nconst difficultyEmoji = {\n  'beginner': '🟢',\n  'intermediate': '🟡',\n  'advanced': '🔴'\n};\nmessage += `${difficultyEmoji[summary.difficulty] || '⚪'} Difficulty: *${summary.difficulty}*\\n`;\nmessage += `⏱ Reading time: ${summary.estimatedReadingTime}\\n\\n`;\n\n// Key Points\nmessage += `🎯 *Key Points:*\\n`;\nsummary.keyPoints.forEach((point, index) => {\n  message += `${index + 1}. ${point}\\n`;\n});\nmessage += `\\n`;\n\n// Main Concepts\nmessage += `💡 *Main Concepts:*\\n`;\nsummary.mainConcepts.forEach((concept, index) => {\n  message += `• ${concept}\\n`;\n});\nmessage += `\\n`;\n\n// Footer\nmessage += `✅ Material saved! Use /quiz to test your knowledge.\\n`;\nmessage += `📎 ID: \\`${data.id}\\``;\n\nreturn {\n  json: {\n    chatId: data.chatId,\n    message: message,\n    materialId: data.id\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        -96
+      ],
+      "id": "b473b8bb-b3f9-4aa3-be70-1e3ae4c73deb",
+      "name": "Learn_GetResponseData"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2448,
+        -96
+      ],
+      "id": "c8f4dac1-9ab5-4d46-8f54-ba89a6104828",
+      "name": "Learn_Respond",
+      "webhookId": "67eb020b-6d64-4e33-8639-5bb27d4b655a",
+      "credentials": {
+        "telegramApi": {
+          "id": "pkKwmTW4Nl2qWnD6",
+          "name": "dr_learner"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1qUzievXrhVMCNIyzEBCMHNADDdUlIKW3oCnIRLvmu14",
+          "mode": "list",
+          "cachedResultName": "ai-learning-materials",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qUzievXrhVMCNIyzEBCMHNADDdUlIKW3oCnIRLvmu14/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Materials",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qUzievXrhVMCNIyzEBCMHNADDdUlIKW3oCnIRLvmu14/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "userId",
+              "lookupValue": "={{ $json.message.from.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        192
+      ],
+      "id": "dcd4b904-c1b5-42a3-a8b0-bc6a50e0d207",
+      "name": "Quiz_FindMaterials",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7aFUTLcHOD2ytmCb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f75baf88-4de1-40b8-bea7-fd25919db771",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        656,
+        192
+      ],
+      "id": "afb775c6-1ef6-4e7f-9d7d-e039d72a9e0f",
+      "name": "Quiz_FindMaterials_If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const materials = $input.all();\nconst chatId = $('Telegram Trigger').first().json.message.chat.id;\n\nconst count = materials.length;\n\nconst keyboard = [];\n\nmaterials.forEach(item => {\n  const data = item.json;\n  \n  let difficulty = '⚪';\n  try {\n    const summary = typeof data.summaryJSON === 'string' \n      ? JSON.parse(data.summaryJSON) \n      : data.summary;\n    \n    const emojiMap = {\n      'beginner': '🟢',\n      'intermediate': '🟡',\n      'advanced': '🔴'\n    };\n    difficulty = emojiMap[summary.difficulty] || '⚪';\n  } catch (e) {}\n  \n  keyboard.push([{\n    text: `${difficulty} ${data.title}`,\n    callback_data: `quiz_${data.id}`\n  }]);\n});\n\nkeyboard.push([{\n  text: \"❌ Cancel\",\n  callback_data: \"quiz_cancel\"\n}]);\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    text: `📚 Select a material to quiz on:\\n\\nYou have ${count} saved material(s).`,\n    reply_markup: {\n      inline_keyboard: keyboard\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        416
+      ],
+      "id": "4acfa565-466f-42d3-94b3-3c7cb6ef2181",
+      "name": "Quiz_FormatMaterials"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot8520170566:AAGuSn3DdV2PequpXnbSsaeiz5mOzpFRWzE/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        864,
+        416
+      ],
+      "id": "dec4d18f-3625-406f-8ba0-d9604320202d",
+      "name": "Quiz_SendMaterials"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "CommandSwitch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CommandSwitch": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Learn_ParseUrl",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Quiz_FindMaterials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Learn_ParseUrl": {
+      "main": [
+        [
+          {
+            "node": "Learn_ParseUrl_ErrorCheck",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Learn_ParseUrl_ErrorCheck": {
+      "main": [
+        [
+          {
+            "node": "Learn_ParseUrl_Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Learn_GetMaterials_Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Learn_GetMaterials_Status": {
+      "main": [
+        [
+          {
+            "node": "Learn_GetMaterials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Learn_GetMaterials": {
+      "main": [
+        [
+          {
+            "node": "Learn_GetMaterials_Parse",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Learn_GetMaterials_ReportError",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Learn_GetMaterials_Parse": {
+      "main": [
+        [
+          {
+            "node": "Learn_GetMaterials_Analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Learn_GetMaterials_Analyze": {
+      "main": [
+        [
+          {
+            "node": "Learn_GetMaterials_ParseAnalyzed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Learn_GetMaterials_ParseAnalyzed": {
+      "main": [
+        [
+          {
+            "node": "Learn_SaveMaterials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Learn_SaveMaterials": {
+      "main": [
+        [
+          {
+            "node": "Learn_GetResponseData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Learn_GetResponseData": {
+      "main": [
+        [
+          {
+            "node": "Learn_Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quiz_FindMaterials": {
+      "main": [
+        [
+          {
+            "node": "Quiz_FindMaterials_If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quiz_FindMaterials_If": {
+      "main": [
+        [
+          {
+            "node": "Quiz_FormatMaterials",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quiz_FormatMaterials": {
+      "main": [
+        [
+          {
+            "node": "Quiz_SendMaterials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8ed41209-551f-4e6d-9347-ce87732ed7aa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f9f13a8d3b21d5a8da35da53452145fb6f846feb37b2c4f8db183e8a25a85d69"
+  },
+  "id": "epQUrL2xHGEahCTd",
+  "tags": []
+}
