@@ -321,9 +321,9 @@
       "parameters": {
         "modelId": {
           "__rl": true,
-          "value": "gpt-4o",
+          "value": "gpt-4o-mini",
           "mode": "list",
-          "cachedResultName": "GPT-4O"
+          "cachedResultName": "GPT-4O-MINI"
         },
         "responses": {
           "values": [
@@ -1026,9 +1026,9 @@
       "parameters": {
         "modelId": {
           "__rl": true,
-          "value": "gpt-4o",
+          "value": "gpt-4o-mini",
           "mode": "list",
-          "cachedResultName": "GPT-4O"
+          "cachedResultName": "GPT-4O-MINI"
         },
         "responses": {
           "values": [
