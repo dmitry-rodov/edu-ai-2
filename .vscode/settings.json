@@ -1,8 +1,0 @@
-{
-    "chat.tools.terminal.autoApprove": {
-        "/^cd /Users/dmitry\\.rodov/Projects/Edu/n8n/task-3 && python3 -c \"\nimport json\n\nd = json\\.load\\(open\\('dr_learner\\.json'\\)\\)\n\n# Find Ans_ProcessAnswer and print its jsCode\nfor n in d\\['nodes'\\]:\n    if n\\['name'\\] == 'Ans_ProcessAnswer':\n        print\\('=' \\* 80\\)\n        print\\('NODE: Ans_ProcessAnswer \\(Code node\\)'\\)\n        print\\('=' \\* 80\\)\n        code = n\\['parameters'\\]\\.get\\('jsCode', ''\\)\n        print\\(code\\)\n        print\\(\\)\n        break\n\"\n$/": {
-            "approve": true,
-            "matchCommandLine": true
-        }
-    }
-}
