@@ -48,6 +48,7 @@ After import, you need to link your credentials to the nodes:
    ```
    https://api.telegram.org/bot<YOUR_TOKEN>/sendMessage
    ```
+   > **Note:** The workflow file uses the placeholder `YOUR_BOT_TOKEN_HERE` in this URL. Replace it with your actual bot token after import.
 
 ### 5. Activate the Workflow
 
