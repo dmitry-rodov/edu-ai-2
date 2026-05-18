@@ -2,7 +2,7 @@
 
 ## Overview
 
-Learner Telegram Bot is an AI-powered Telegram learning bot built entirely in n8n. It lets users submit URLs to study, generates structured summaries with key points, and quizzes users on saved materials with multiple-choice questions. The bot stores all data in Google Sheets and uses OpenAI (gpt-4o-mini) for content analysis and quiz generation.
+Learner Telegram Bot is an AI-powered Telegram learning bot built entirely in n8n. It lets users submit URLs to study, generates structured summaries with key points, and quizzes users on saved materials with multiple-choice questions. The bot stores all data in Google Sheets and uses OpenAI (gpt-4o) for content analysis and quiz generation.
 
 The final workflow contains **45 nodes**: 15 Telegram, 11 Code, 7 Google Sheets, 4 Switch, 3 IF, 2 HTTP Request, 2 OpenAI, and 1 Telegram Trigger.
 
@@ -22,10 +22,12 @@ To validate and improve the AI-generated JSON, I used the Context7 MCP server to
 ### Google Sheets API
 Used as the primary data store via n8n's native Google Sheets nodes. All materials, summaries, quiz questions, quiz state, and scores are stored in a single sheet with columns for each data type.
 
-### OpenAI API (gpt-4o-mini)
+### OpenAI API (gpt-4o)
 Two AI-powered nodes:
 - **Learn_GetMaterials_Analyze**: Analyzes fetched web page content and produces structured summaries with title, key points, and difficulty rating.
 - **Quiz_GenerateQuestions**: Generates 5 multiple-choice questions from the material summary for quiz mode.
+
+The initial implementation used `gpt-4o-mini` for cost efficiency. After reviewing the available OpenAI model options — including `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini`, `o3-mini`, and `o4-mini` — `gpt-4o` was selected as the best balance of quality and availability. It produces significantly better structured JSON output for summaries and more accurate, contextually relevant quiz questions, while still being supported by the n8n free OpenAI API credits.
 
 ### Python (Validation Scripts)
 Used Python one-liners in the terminal to validate JSON structure, check for misplaced parameters, and verify fixes across all nodes. This was faster and more reliable than manual inspection of a 1800+ line JSON file.
