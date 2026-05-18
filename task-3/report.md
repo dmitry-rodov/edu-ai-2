@@ -2,7 +2,7 @@
 
 ## Overview
 
-Learner Telegram Bot is an AI-powered Telegram learning bot built entirely in n8n. It lets users submit URLs to study, generates structured summaries with key points, and quizzes users on saved materials with multiple-choice questions. The bot stores all data in Google Sheets and uses OpenAI (gpt-4o) for content analysis and quiz generation.
+Learner Telegram Bot is an AI-powered Telegram learning bot built entirely in n8n. It lets users submit URLs to study, generates structured summaries with key points, and quizzes users on saved materials with multiple-choice questions. The bot stores all data in Google Sheets and uses OpenAI (gpt-4o-mini) for content analysis and quiz generation.
 
 The final workflow contains **45 nodes**: 15 Telegram, 11 Code, 7 Google Sheets, 4 Switch, 3 IF, 2 HTTP Request, 2 OpenAI, and 1 Telegram Trigger.
 
@@ -22,12 +22,12 @@ To validate and improve the AI-generated JSON, I used the Context7 MCP server to
 ### Google Sheets API
 Used as the primary data store via n8n's native Google Sheets nodes. All materials, summaries, quiz questions, quiz state, and scores are stored in a single sheet with columns for each data type.
 
-### OpenAI API (gpt-4o)
+### OpenAI API (gpt-4o-mini)
 Two AI-powered nodes:
 - **Learn_GetMaterials_Analyze**: Analyzes fetched web page content and produces structured summaries with title, key points, and difficulty rating.
 - **Quiz_GenerateQuestions**: Generates 5 multiple-choice questions from the material summary for quiz mode.
 
-The initial implementation used `gpt-4o-mini` for cost efficiency. After reviewing the available OpenAI model options — including `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini`, `o3-mini`, and `o4-mini` — `gpt-4o` was selected as the best balance of quality and availability. It produces significantly better structured JSON output for summaries and more accurate, contextually relevant quiz questions, while still being supported by the n8n free OpenAI API credits.
+The implementation uses `gpt-4o-mini` — the only model supported by the n8n free OpenAI API credits used in this project. While reviewing available options (`gpt-4o`, `gpt-4.1`, `gpt-4.1-mini`, `o3-mini`, `o4-mini`), switching to `gpt-4o` was attempted but rejected with error code 600 ("Model not allowed with n8n AI credits"). `gpt-4o-mini` is therefore both the cost-efficient and the only viable choice with this credential type.
 
 ### Python (Validation Scripts)
 Used Python one-liners in the terminal to validate JSON structure, check for misplaced parameters, and verify fixes across all nodes. This was faster and more reliable than manual inspection of a 1800+ line JSON file.
@@ -50,7 +50,7 @@ Used Python one-liners in the terminal to validate JSON structure, check for mis
 
 ## What Did Not Work
 
-1. **Inline keyboard with dynamic options** — The default n8n Telegram node uses a `fixedCollection` parameter for inline keyboards, which requires a static number of rows defined at design time. For the material selection keyboard (where the number of materials varies per user), this approach was impossible. I had to fall back to an HTTP Request node calling the Telegram API directly, which required hardcoding the bot token in the URL. I explored `predefinedCredentialType`, `$vars`, and `$env` alternatives, but none could inject the token into the URL path for Telegram's auth scheme. This was frustrating but unavoidable.
+1. **Inline keyboard with dynamic options** — The default n8n Telegram node uses a `fixedCollection` parameter for inline keyboards, which requires a static number of rows defined at design time. For the material selection keyboard (where the number of rows depends on how many materials the user has saved), this was impossible. I had to fall back to an HTTP Request node calling the Telegram API directly with a dynamically built `reply_markup`, which required hardcoding the bot token in the URL. I explored `predefinedCredentialType`, `$vars`, and `$env` alternatives, but none could inject the token into the URL path for Telegram's auth scheme.\n\n   For quiz answer buttons (A, B, C, D), the static `fixedCollection` approach in the native Telegram node *was* viable as a workaround — there are always exactly 4 buttons, so the row count is fixed. The callback data (`ans_<materialId>_A` etc.) is dynamic but fits within static button definitions using n8n expressions. This distinction — static count with dynamic data vs. truly dynamic count — is what determined which nodes used the native Telegram node and which used HTTP Request.
 
 2. **`appendAttribution` parameter placement** — The AI initially placed `appendAttribution: false` inside the `additionalFields` collection. In n8n's Telegram node v1.2, this is actually a top-level parameter. When misplaced, n8n silently defaulted to `true`, appending attribution text and forcing Markdown parse mode — which broke messages containing `[url]` syntax. This caused cryptic "Bad Request: can't parse entities" errors from the Telegram API at byte offset 380.
 
